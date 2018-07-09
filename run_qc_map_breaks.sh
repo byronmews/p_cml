@@ -7,7 +7,7 @@
 # Description: Breakpoint mapping analysis
 #----------------------------------------------------
 
-########## Load modules
+########## Load modules ##########
 module load fastqc # defaults to v.X
 module load trimmomatic/0.36
 module load bwa/0.7.15
@@ -17,7 +17,7 @@ module load samtools/1.2
 module load bioperl/1.6.0
 module load picard/2.6.0
 
-########## Static vars ##########
+########### Static vars ##########
 DBS="/home/malikian/bp_mapping/dbs"
 
 
