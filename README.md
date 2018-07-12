@@ -18,5 +18,3 @@ anaconda-setup
 conda install crest 
 
 Note, might also need to use samtools pre v1.0 (eg.v0.1.17)?
-
-
