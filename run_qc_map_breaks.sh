@@ -8,8 +8,9 @@
 #----------------------------------------------------
 
 ########## Static vars ##########
-DBS="/home/malikian/bp_mapping/dbs"
 outputDir="results"
+refGenome="hg38.fa" # indexed previously
+refGenomePath="/home/malikian/bp_mapping/dbs/"
 
 
 ######### Functions/Modules ##########
@@ -35,18 +36,18 @@ func_trimmomatic() {
 
 }
 
-# Mapping and parse BAM. Genome fasta and bwa index in DBS variable declared at top
+# Mapping and parse BAM. Genome fasta and bwa index in refGenomePath variable declared at top
 func_bwa() {
 	echo "Running bwa mem..."
         echo "PE, 8 threads"
 	echo "Ouput SAM filename $fastq_base_name"
 
 	# Create syminks to genome index
-	echo "Creating symlinks to indexed hg38 genome at /home/malikian/bp_mapping/dbs"
-	ln -s /home/malikian/bp_mapping/dbs/hg38.fa.* .
+	echo "Creating symlinks to indexed hg38 genome at" $refGenomePath
+	ln -s $refGenomePath"/"$refGenome.* .
 
 	# Run bwa mem
-	bwa mem -t 8 hg38.fa $1 $2 > $fastq_base_name".sam"
+	bwa mem -t 8 $refGenome $1 $2 > $fastq_base_name".sam"
 
 	# SAM>BAM
 	echo "Convert to BAM..."
@@ -64,12 +65,27 @@ func_mapping_stats() {
 }
 
 
-# CREST. As extractSclip.pl
+# CREST. Using anaconda package
 func_crest() {
 	#
 	echo "Running CREST..."
+	echo "Using anaconda3/personal for Bio/DB/Sam.pm module dependency"
+
+	echo "Get soft-clipping positions..."
+	echo "Extracting chr9 chr22"
+
+	arr=( chr9 chr22 )
 	
-	echo "Can't locate Bio/DB/Sam.pm"	
+	for i in "${arr}"
+	do	
+		perl -I ~/anaconda3/lib/perl5/site_perl/5.22.0/ ~/anaconda3/bin/extractSClip.pl -i $fastq_base_name".bam" --ref_genome $refGenome -r $i
+	done
+
+	# Concatenate split chrs
+	cat $fastq_base_name".bam.*.cover" > $fastq_base_name".bam.cover"
+
+	echo "SV detection..."
+	#
 
 }
 
