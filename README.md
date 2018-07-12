@@ -17,4 +17,9 @@ Install CREST conda package
 conda install crest
 ```
 
+Install perl-bio-db-sam dependency
+```
+conda install -c bioconda perl-bio-db-sam
+```
+
 Note, might also need to use samtools pre v1.0 (eg.v0.1.17)?
