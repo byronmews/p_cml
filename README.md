@@ -1,6 +1,6 @@
 # p_cml
 
-## Dependencies on CTX1
+## Dependencies on CTX1 node @ HPC
 
 CREST module on PBS does not include teh Perl module Bio:DB:Sam, or the assembler CAP3
 
