@@ -7,17 +7,6 @@
 # Description: Breakpoint mapping analysis
 #----------------------------------------------------
 
-########## Load modules
-module load fastqc # defaults to v.X
-module load trimmomatic/0.36
-module load bwa/0.7.15
-module load crest/1.0 # requires Bio:DB:Sam module, and an aligner eg.
-module load blat/35
-module load samtools/1.2 # dependencie for CREST? v.0.1.17 maybe needed
-module load bioperl/1.6.0
-module load picard/2.6.0
-module load breakdancer/1.2
-
 ########## Static vars ##########
 DBS="/home/malikian/bp_mapping/dbs"
 outputDir="results"
