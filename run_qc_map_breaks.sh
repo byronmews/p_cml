@@ -75,14 +75,16 @@ func_crest() {
 	echo "Extracting chr9 chr22"
 
 	arr=( chr9 chr22 )
-	
-	for i in "${arr}"
+
+	for element in "${arr[@]}"
 	do	
-		perl -I ~/anaconda3/lib/perl5/site_perl/5.22.0/ ~/anaconda3/bin/extractSClip.pl -i $fastq_base_name".bam" --ref_genome $refGenome -r $i
+		echo $element
+
+		perl -I ~/anaconda3/lib/perl5/site_perl/5.22.0/ ~/anaconda3/bin/extractSClip.pl -i $fastq_base_name".bam" --ref_genome $refGenome -r $element
 	done
 
 	# Concatenate split chrs
-	cat $fastq_base_name".bam.*.cover" > $fastq_base_name".bam.cover"
+	cat "$fastq_base_name.bam".*".cover" > $fastq_base_name".bam.cover"
 
 	echo "SV detection..."
 	#
@@ -145,13 +147,13 @@ r2=120925_M00368_0055_A000000000-A1EY4_CGATGT_A_S1_L001_R2_001.fastq.gz
 
 	# 4.Run mapping and QC
 	#func_bwa $fastq_r1_trimmed $fastq_r2_trimmed
-	func_mapping_stats
+	#func_mapping_stats
 	
 	# 5.Run CREST
-	#func_crest
+	func_crest
 
 	# 6.Run BREAKDANCER
-	func_breakdancer	
+	#func_breakdancer	
 
 	echo "Done"
 
