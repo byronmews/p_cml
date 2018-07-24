@@ -67,9 +67,10 @@ func_mapping_stats() {
 
 # CREST. Using anaconda package
 func_crest() {
-	#
-	echo "Running CREST..."
-	echo "Using anaconda3/personal for Bio/DB/Sam.pm module dependency"
+
+	echo "Running CREST - Clipping REveals STructure..."
+	echo "Using anaconda3/personal for Bio/DB/Sam.pm module dependency, and custom modules at:"
+	echo "		home/malikian/bp_mapping/CREST_modules/"
 
 	echo "Get soft-clipping positions..."
 	echo "Extracting chr9 chr22"
@@ -80,14 +81,17 @@ func_crest() {
 	do	
 		echo $element
 
-		perl -I ~/anaconda3/lib/perl5/site_perl/5.22.0/ ~/anaconda3/bin/extractSClip.pl -i $fastq_base_name".bam" --ref_genome $refGenome -r $element
+		#perl -I ~/anaconda3/lib/perl5/site_perl/5.22.0/ ~/anaconda3/bin/extractSClip.pl -i $fastq_base_name".bam" --ref_genome $refGenome -r $element
 	done
+	
+	# Starting blat server
+	echo "Starting blat server using gfServer from blat suite"	
+	#gfServer start localhost 8666 $refGenome".2bit"
 
 	# Concatenate split chrs
-	cat "$fastq_base_name.bam".*".cover" > $fastq_base_name".bam.cover"
-
+	#cat "$fastq_base_name.bam".*".cover" > $fastq_base_name".bam.cover"
 	echo "SV detection..."
-	#
+	perl -I ~/anaconda3/lib/perl5/site_perl/5.22.0/ ~/anaconda3/bin/CREST.pl -f $fastq_base_name".bam.cover" -d $fastq_base_name".bam" --ref_genome $refGenome -t hg38.fa.2bit --blatserver localhost --blatport 8111
 
 }
 
@@ -140,7 +144,7 @@ r2=120925_M00368_0055_A000000000-A1EY4_CGATGT_A_S1_L001_R2_001.fastq.gz
 	#func_fastqc $fastq_r1 $fastq_r2
 	
 	# 2.Run trimming. Creates trimmed vars.
-	func_trimmomatic $fastq_r1 $fastq_r2
+	#func_trimmomatic $fastq_r1 $fastq_r2
 	
 	# 3.Run fastQC post trim. Note variables assigned in trimming function.
 	#func_fastqc $fastq_r1_trimmed $fastq_r2_trimmed
