@@ -10,7 +10,7 @@
 ########## Static vars ##########
 outputDir="results"
 refGenome="hg38.fa" # indexed previously
-refGenomePath="/home/malikian/bp_mapping/dbs/"
+refGenomePath="/home/malikian/bp_mapping/dbs"
 
 
 ######### Functions/Modules ##########
@@ -28,7 +28,7 @@ func_trimmomatic() {
 	echo "Running Trimmomatic..."
 	echo "PE mode, 4 threads"
 	
-	trimmomatic PE -phred33 -threads 4 -trimlog $fastq_base_name".trimmomatic.log" $1 $2 $fastq_r1_base"_PE.fastq" $fastq_r1_base"_SE.fastq" $fastq_r2_base"_PE.fastq" $fastq_r2_base"_SE.fastq" ILLUMINACLIP:$DBS/clip.fa:2:30:10 LEADING:20 TRAILING:20 MINLEN:40 	
+	trimmomatic PE -phred33 -threads 4 -trimlog $fastq_base_name".trimmomatic.log" $1 $2 $fastq_r1_base"_PE.fastq" $fastq_r1_base"_SE.fastq" $fastq_r2_base"_PE.fastq" $fastq_r2_base"_SE.fastq" ILLUMINACLIP:$refGenomePath/clip.fa:2:30:10 LEADING:20 TRAILING:20 MINLEN:40 	
 
 	# New vars for trimmed PE fastq files
 	fastq_r1_trimmed=$fastq_r1_base"_PE.fastq"
@@ -37,14 +37,14 @@ func_trimmomatic() {
 }
 
 # Mapping and parse BAM. Genome fasta and bwa index in refGenomePath variable declared at top
-func_bwa() {
+func_bwa_mem() {
 	echo "Running bwa mem..."
         echo "PE, 8 threads"
 	echo "Ouput SAM filename $fastq_base_name"
 
 	# Create syminks to genome index
 	echo "Creating symlinks to indexed hg38 genome at" $refGenomePath
-	ln -s $refGenomePath"/"$refGenome.* .
+	ln -s $refGenomePath"/"$refGenome* .
 
 	# Run bwa mem
 	bwa mem -t 8 $refGenome $1 $2 > $fastq_base_name".sam"
@@ -52,8 +52,34 @@ func_bwa() {
 	# SAM>BAM
 	echo "Convert to BAM..."
 	picard SortSam VALIDATION_STRINGENCY=LENIENT INPUT=$fastq_base_name".sam" OUTPUT=$fastq_base_name".bam" SORT_ORDER=coordinate
+	
 	samtools index $fastq_base_name".bam"
 }
+
+# Mapping and parse BAM. Genome fasta and bwa index in refGenomePath variable declared at top
+func_bwa_sampe() {
+        echo "Running bwa sampe..."
+        echo "PE, 8 threads"
+        echo "Ouput SAM filename $fastq_base_name"
+
+        # Create syminks to genome index
+        echo "Creating symlinks to indexed hg38 genome at" $refGenomePath
+        ln -s $refGenomePath"/"$refGenome.* .
+
+	# Run index
+	bwa aln $refGenome $1 > $fastq_base_name"_R1.sai"
+	bwa aln $refGenome $2 > $fastq_base_name"_R2.sai"
+
+        # Run bwa sampe
+	bwa sampe $refGenome $fastq_base_name"_R1.sai" $fastq_base_name"_R2.sai" $1 $2 > $fastq_base_name".sam"
+
+        # SAM>BAM
+        echo "Convert to BAM..."
+        picard SortSam VALIDATION_STRINGENCY=LENIENT INPUT=$fastq_base_name".sam" OUTPUT=$fastq_base_name".bam" SORT_ORDER=coordinate
+        
+	samtools index $fastq_base_name".bam"
+}
+
 
 func_mapping_stats() {
 
@@ -73,15 +99,15 @@ func_crest() {
 	echo "		home/malikian/bp_mapping/CREST_modules/"
 
 	echo "Get soft-clipping positions..."
-	echo "Extracting chr9 chr22"
+	echo "Extracting chromosomes:"
 
-	arr=( chr9 chr22 )
+	arr=( chr8 chr9 chr21 chr22 chr23 )
 
 	for element in "${arr[@]}"
 	do	
 		echo $element
 
-		#perl -I ~/anaconda3/lib/perl5/site_perl/5.22.0/ ~/anaconda3/bin/extractSClip.pl -i $fastq_base_name".bam" --ref_genome $refGenome -r $element
+		perl -I ~/anaconda3/lib/perl5/site_perl/5.22.0/ ~/anaconda3/bin/extractSClip.pl -i $fastq_base_name".bam" --ref_genome $refGenome -r $element
 	done
 	
 	# Starting blat server
@@ -89,7 +115,8 @@ func_crest() {
 	#gfServer start localhost 8666 $refGenome".2bit"
 
 	# Concatenate split chrs
-	#cat "$fastq_base_name.bam".*".cover" > $fastq_base_name".bam.cover"
+	cat "$fastq_base_name.bam".*".cover" > $fastq_base_name".bam.cover"
+	
 	echo "SV detection..."
 	perl -I ~/anaconda3/lib/perl5/site_perl/5.22.0/ ~/anaconda3/bin/CREST.pl -f $fastq_base_name".bam.cover" -d $fastq_base_name".bam" --ref_genome $refGenome -t hg38.fa.2bit --blatserver localhost --blatport 8111
 
@@ -141,16 +168,16 @@ r2=120925_M00368_0055_A000000000-A1EY4_CGATGT_A_S1_L001_R2_001.fastq.gz
 	fastq_base_name=`echo $fastq_r1 | sed 's/_L001_R.*//'` # core filename
 
 	# 1.Run fastqQC pre trim
-	#func_fastqc $fastq_r1 $fastq_r2
+	func_fastqc $fastq_r1 $fastq_r2
 	
 	# 2.Run trimming. Creates trimmed vars.
-	#func_trimmomatic $fastq_r1 $fastq_r2
+	func_trimmomatic $fastq_r1 $fastq_r2
 	
 	# 3.Run fastQC post trim. Note variables assigned in trimming function.
-	#func_fastqc $fastq_r1_trimmed $fastq_r2_trimmed
+	func_fastqc $fastq_r1_trimmed $fastq_r2_trimmed
 
 	# 4.Run mapping and QC
-	#func_bwa $fastq_r1_trimmed $fastq_r2_trimmed
+	func_bwa_sampe $fastq_r1_trimmed $fastq_r2_trimmed
 	#func_mapping_stats
 	
 	# 5.Run CREST

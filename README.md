@@ -22,4 +22,18 @@ Install perl-bio-db-sam dependency
 conda install -c bioconda perl-bio-db-sam
 ```
 
+gfServer setup and use module on HPC. Manage server.
+```
+gfServer start localhost 8111 hg38.fa.2bit
+```
+
+
+Many other dependencies:
+	requires ref in 2bit format(fatotwobit)
+	gfServer
+	CREST own perl Tree module(within install)
+
+Make sure when running CREST.pl all modules are within @INC path
+ 
+
 Note, might also need to use samtools pre v1.0 (eg.v0.1.17)?
