@@ -5,7 +5,7 @@
 #PBS -m e
 #
 # Job name (default is name of pbs script file)
-#PBS -N crest_analysis
+#PBS -N breakdancer_analysis
 ########## End of PBS scripting
 
 # Usage: Batch script to run a serial job under SGE.
@@ -31,10 +31,13 @@ module load blat/35
 
 #Run
 cd $PBS_O_WORKDIR
-bash run_qc_map_breaks.sh
+for fastq_R1 in IMSND-II-25*_R1_*fastq.gz; do
 
+	fastq_R2=`echo $fastq_R1 | sed 's/_R1_/_R2_/'`
+
+	bash run_qc_map_breaks.sh $fastq_R1 $fastq_R2
+done
 
 ########## Done ##########
-
 
 

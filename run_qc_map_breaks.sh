@@ -10,7 +10,7 @@
 ########## Static vars ##########
 outputDir="results"
 refGenome="hg38.fa" # indexed previously
-refGenomePath="/home/malikian/bp_mapping/dbs"
+refGenomePath="$WORK/malikian/bp_mapping/dbs"
 
 
 ######### Functions/Modules ##########
@@ -34,6 +34,8 @@ func_trimmomatic() {
 	fastq_r1_trimmed=$fastq_r1_base"_PE.fastq"
 	fastq_r2_trimmed=$fastq_r2_base"_PE.fastq"
 
+	# Tidy
+	#rm $fastq_base_name".trimmomatic.log"
 }
 
 # Mapping and parse BAM. Genome fasta and bwa index in refGenomePath variable declared at top
@@ -46,12 +48,15 @@ func_bwa_mem() {
 	echo "Creating symlinks to indexed hg38 genome at" $refGenomePath
 	ln -s $refGenomePath"/"$refGenome* .
 
-	# Run bwa mem
-	bwa mem -t 8 $refGenome $1 $2 > $fastq_base_name".sam"
+	# Run bwa mem, pipe to sorted bam output
+	bwa mem -t 8 $refGenome $1 $2 | samtools view -bS - > $fastq_base_name".bam"
 
 	# SAM>BAM
-	echo "Convert to BAM..."
-	picard SortSam VALIDATION_STRINGENCY=LENIENT INPUT=$fastq_base_name".sam" OUTPUT=$fastq_base_name".bam" SORT_ORDER=coordinate
+	#echo "Convert to BAM..."
+	#picard SortSam VALIDATION_STRINGENCY=LENIENT INPUT=$fastq_base_name".sam" OUTPUT=$fastq_base_name".bam" SORT_ORDER=coordinate
+	
+	samtools sort -o $fastq_base_name".sorted.bam" $fastq_base_name".bam"
+	mv $fastq_base_name".sorted.bam" $fastq_base_name".bam"
 	
 	samtools index $fastq_base_name".bam"
 }
@@ -149,19 +154,15 @@ func_breakdancer() {
 
 ########## Main logic ########## 
 
-# Temp hard set instead of passing comd line args, skip control of args with temp logic skip.
-r1=120925_M00368_0055_A000000000-A1EY4_CGATGT_A_S1_L001_R1_001.fastq.gz
-r2=120925_M00368_0055_A000000000-A1EY4_CGATGT_A_S1_L001_R2_001.fastq.gz
-
 # Remove commentsif using cmd line args. Remove above hardset filenames
 #Check input for 2 filein
-#if [ $# -ne 2 ]; then 
-#	echo "Enter 2 fastq files"
-#	exit 1
-#else
+if [ $# -ne 2 ]; then 
+	echo "Enter 2 fastq files"
+	exit 1
+else
 	# Set fastq names
-	fastq_r1=$r1	#$1
-	fastq_r2=$r2	#$2
+	fastq_r1=$1
+	fastq_r2=$2
 
 	fastq_r1_base=`echo $fastq_r1 | sed 's/.fastq.gz//'` # core r1 filename
 	fastq_r2_base=`echo $fastq_r2 | sed 's/.fastq.gz//'` # core r2 filename
@@ -177,19 +178,19 @@ r2=120925_M00368_0055_A000000000-A1EY4_CGATGT_A_S1_L001_R2_001.fastq.gz
 	func_fastqc $fastq_r1_trimmed $fastq_r2_trimmed
 
 	# 4.Run mapping and QC
-	func_bwa_sampe $fastq_r1_trimmed $fastq_r2_trimmed
-	#func_mapping_stats
+	func_bwa_mem $fastq_r1_trimmed $fastq_r2_trimmed
+	func_mapping_stats
 	
 	# 5.Run CREST
-	func_crest
+	#func_crest
 
 	# 6.Run BREAKDANCER
-	#func_breakdancer	
+	func_breakdancer	
 
 	echo "Done"
 
 # Remove comment if using cmd args loop str
-#fi
+fi
 
 
 ########## End ##########
