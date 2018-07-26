@@ -26,12 +26,13 @@ module load picard/2.6.0
 module load breakdancer/1.2
 module load anaconda3/personal # for CRESt and dependencies
 module load blat/35
+module load samtools
 ########## End of load modules
 
 
 #Run
 cd $PBS_O_WORKDIR
-for fastq_R1 in IMSND-II-25*_R1_*fastq.gz; do
+for fastq_R1 in *_R1_*fastq.gz; do
 
 	fastq_R2=`echo $fastq_R1 | sed 's/_R1_/_R2_/'`
 

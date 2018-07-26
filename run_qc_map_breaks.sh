@@ -35,6 +35,7 @@ func_trimmomatic() {
 	fastq_r2_trimmed=$fastq_r2_base"_PE.fastq"
 
 	# Tidy
+	rm $fastq_r1_base"_SE.fastq" $fastq_r2_base"_SE.fastq"
 	#rm $fastq_base_name".trimmomatic.log"
 }
 
@@ -49,14 +50,11 @@ func_bwa_mem() {
 	ln -s $refGenomePath"/"$refGenome* .
 
 	# Run bwa mem, pipe to sorted bam output
-	bwa mem -t 8 $refGenome $1 $2 | samtools view -bS - > $fastq_base_name".bam"
+	bwa mem -t 8 $refGenome $1 $2 > $fastq_base_name".sam" 
 
 	# SAM>BAM
-	#echo "Convert to BAM..."
-	#picard SortSam VALIDATION_STRINGENCY=LENIENT INPUT=$fastq_base_name".sam" OUTPUT=$fastq_base_name".bam" SORT_ORDER=coordinate
-	
-	samtools sort -o $fastq_base_name".sorted.bam" $fastq_base_name".bam"
-	mv $fastq_base_name".sorted.bam" $fastq_base_name".bam"
+	echo "Convert to BAM..."
+	picard SortSam VALIDATION_STRINGENCY=LENIENT INPUT=$fastq_base_name".sam" OUTPUT=$fastq_base_name".bam" SORT_ORDER=coordinate
 	
 	samtools index $fastq_base_name".bam"
 }
